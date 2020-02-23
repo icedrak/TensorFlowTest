@@ -2,12 +2,24 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+
+import time
 import copy
 import json
 import math
 import six
 import tensorflow as tf
-from official.modeling import activations
+
+
+tf.debugging.set_log_device_placement(True)
+# gpus = tf.config.experimental.list_physical_devices('GPU')
+# if gpus:
+#   # 텐서플로가 첫 번째 GPU만 사용하도록 제한
+#   try:
+#     tf.config.experimental.set_visible_devices(gpus[0], 'GPU')
+#   except RuntimeError as e:
+#     # 프로그램 시작시에 접근 가능한 장치가 설정되어야만 합니다
+#     print(e)
 
 def gelu(x):
   """Gaussian Error Linear Unit.
@@ -1019,10 +1031,21 @@ def create_bert_model(bert_config):
 
   core_model.build(input_shape=(None, max_seq_length))
   core_model.summary()
-  core_model.save('test.h5', overwrite=True)
   return core_model
 
 bert_config_file="./bert_config.json"
 bert_config = BertConfig.from_json_file(bert_config_file)
 
-create_bert_model(bert_config)
+model = create_bert_model(bert_config)
+
+val = 200
+with tf.device('/CPU:0'):
+    a = tf.random.uniform(shape=[val, 512], minval = 0, maxval = 30521, dtype=tf.int64)
+    a1 = tf.random.uniform(shape=[val, 512], minval = 0, maxval = 1, dtype=tf.int64)
+    a2 = tf.random.uniform(shape=[val, 512], minval = 0, maxval = 1, dtype=tf.int64)
+
+start_time = time.time()
+with tf.device('/GPU:0'):
+    print(model.predict_on_batch([a,a1,a2]))
+elapsed_time = time.time() - start_time
+print(elapsed_time)
